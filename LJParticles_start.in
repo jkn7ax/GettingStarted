@@ -1,0 +1,47 @@
+#Initialization 
+variable xhi equal 23
+variable yhi equal 23
+variable zhi equal 23
+variable numberatoms equal 260
+variable mass equal 39.948002
+variable seed equal 12345
+variable temp equal 120
+variable numSteps equal 10000 
+variable dump equal 10 
+
+
+#setParameters
+units metal 
+dimension 3
+atom_style atomic 
+
+#forceFieldParameters
+pair_style hybrid lj/cut 10.0
+
+
+#Atom Definition 
+region box block 0 ${xhi} 0 ${yhi} 0 ${zhi}
+create_box 1 box
+create_atoms 1 random ${numberatoms} ${seed} NULL
+mass 1 ${mass"
+velocity all create ${temp} ${seed}
+#read_restart liq.restart 
+#reset_timestep 0
+
+#Settings
+pair_coeff 1 1 lj/cut 0.0103 3.405
+fix nvt all nvt temp ${temp} ${temp} 0.1
+neigh_modify delay 5
+timestep 0.001
+
+#RunSim
+minimize 1.0e-4 1.0e-6 100 1000
+reset_timestep 0
+compute myRDF all rdf 100
+fix 1 all ave/time 100 1 200 c_myRDF[*] file rdf.txt mode vector
+
+thermo 1000
+dump dump1 all atom ${dump} liquid.lammpstrj
+
+run ${numSteps}
+write_restart liq.restart
